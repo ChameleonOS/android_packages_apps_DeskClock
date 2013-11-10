@@ -453,7 +453,15 @@ public class AlarmClock extends Activity implements LoaderManager.LoaderCallback
         private final boolean mHasVibrator;
 
         // This determines the order in which it is shown and processed in the UI.
-        private final int[] DAY_ORDER;
+        private final int[] DAY_ORDER = new int[] {
+                Calendar.SUNDAY,
+                Calendar.MONDAY,
+                Calendar.TUESDAY,
+                Calendar.WEDNESDAY,
+                Calendar.THURSDAY,
+                Calendar.FRIDAY,
+                Calendar.SATURDAY,
+        };
 
         public class ItemHolder {
 
@@ -471,7 +479,6 @@ public class AlarmClock extends Activity implements LoaderManager.LoaderCallback
             ViewGroup[] dayButtonParents = new ViewGroup[7];
             ToggleButton[] dayButtons = new ToggleButton[7];
             CheckBox vibrate;
-            CheckBox increasingVolume;
             ViewGroup collapse;
             TextView ringtone;
             View hairLine;
@@ -532,16 +539,6 @@ public class AlarmClock extends Activity implements LoaderManager.LoaderCallback
 
             mHasVibrator = ((Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE))
                     .hasVibrator();
-
-
-            DAY_ORDER = new int[7];
-            int firstDay = Calendar.getInstance().getFirstDayOfWeek();
-            int day;
-            for(day = 0; day < 7; day++)
-            {
-                DAY_ORDER[day] = firstDay;
-                firstDay = firstDay % 7 + 1;
-            }
         }
 
         public void removeSelectedId(int id) {
@@ -612,7 +609,6 @@ public class AlarmClock extends Activity implements LoaderManager.LoaderCallback
                 holder.dayButtonParents[i] = viewgroup;
             }
             holder.vibrate = (CheckBox) view.findViewById(R.id.vibrate_onoff);
-            holder.increasingVolume = (CheckBox) view.findViewById(R.id.increasing_volume_onoff);
             holder.collapse = (ViewGroup) view.findViewById(R.id.collapse);
             holder.ringtone = (TextView) view.findViewById(R.id.choose_ringtone);
 
@@ -891,30 +887,6 @@ public class AlarmClock extends Activity implements LoaderManager.LoaderCallback
                 }
             });
 
-            itemHolder.increasingVolume.setVisibility(View.VISIBLE);
-            itemHolder.increasingVolume.setChecked(alarm.increasingVolume);
-            itemHolder.increasingVolume.setTextColor(
-                    alarm.increasingVolume ? mColorLit : mColorDim);
-            itemHolder.increasingVolume.setOnLongClickListener(mLongClickListener);
-
-            itemHolder.increasingVolume.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    final boolean checked = ((CheckBox) v).isChecked();
-                    //When action mode is on - simulate long click
-                    if (doLongClick(v)) {
-                        return;
-                    }
-                    if (checked) {
-                        itemHolder.increasingVolume.setTextColor(mColorLit);
-                    } else {
-                        itemHolder.increasingVolume.setTextColor(mColorDim);
-                    }
-                    alarm.increasingVolume = checked;
-                    asyncUpdateAlarm(alarm, false);
-                }
-            });
-
             itemHolder.collapse.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -1039,9 +1011,6 @@ public class AlarmClock extends Activity implements LoaderManager.LoaderCallback
             if (title == null) {
                 // This is slow because a media player is created during Ringtone object creation.
                 Ringtone ringTone = RingtoneManager.getRingtone(mContext, uri);
-                if (ringTone == null) {
-                    return null;
-                }
                 title = ringTone.getTitle(mContext);
                 if (title != null) {
                     mRingtoneTitleCache.putString(uri.toString(), title);
